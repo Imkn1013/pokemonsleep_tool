@@ -1,0 +1,270 @@
+<html>
+<body>
+  <h3>ポケモンスリープ厳選基準表メーカー</h3>
+  <p>ver-β</p>
+  <p>made by せな</p>
+  <p>評価基準と、育てる予定のレベルを入力してください。<br>
+  出現確率の計算が絶望的に間違っており、正しい計算方法も今ひとつわからないため参考にしないでください。<br>
+  なお、現状利用できるのはきのみとくいいつの間に育成エナジーのみです。
+  </p>
+  <fieldset>
+    <form id="preset">
+   <legend>評価基準</legend>
+   <div>
+    <input type="radio" id="kinomi" value="kinomi" name="preset" checked/>
+    <label for="kinomi">きのみとくい いつ育エナジー</label>
+   </div>
+   <div>
+    <input type="radio" id="ingredients" value="ingredients" name="preset"/>
+    <label for="ingredients">食材数</label>
+   </div>
+   <div>
+    <input type="radio" id="skilltimes" value="skilltimes" name="preset"/>
+    <label for="skilltimes">スキル回数</label>
+   </div>
+   <div>
+    <input type="radio" id="custom" value="custom" name="preset"/>
+    <label for="custom">カスタム</label>
+   </div>
+      </form>
+  </fieldset>
+  <fieldset>
+    <form id="level">
+      <input type="radio" name="level" id="lv25" value="lv25"/>
+      <label for="lv25">lv25</label>
+      <input type="radio" name="level" id="lv50" value="lv50" checked/>
+      <label for="lv50">lv50</label>
+      <input type="radio" name="level" id="lv75" value="lv75"/>
+      <label for="lv75">lv75</label>
+      <input type="radio" name="level" id="lv100" value="lv100"/>
+      <label for="lv100">lv100</label>
+    </form>
+  </fieldset>
+  <table id="table"></table>
+  
+  <!--メモ：
+　　非食材型：25,50,75,100
+　　　食材型：30,50,60,75,100
+　　　オプション：
+　　　銀種、ミント、スキル天井
+　　　食材→ABCの比重を入力
+　　　A食材の数
+　　　AAA→そのまま
+　　　ABA→60前提ならそのまま、50以下は25止め
+　　　　　　　　(25と50で多い方がよいが、一枠で2倍を補うサブスキルがないため)
+　　　AAX→50止め、lv100前提なら多い方　7/2→7/3(2/3倍)
+　　　ABX→
+　　　ABC、きのみに重み付け(基本は追加食材扱い？)
+　　　lv29,lv59,最大lvで計算→スコア最大を採用(お手スピ補正を考える)
+　　!-->
+  
+  <button id=button>生成</button>
+  <script>
+    
+    const s={
+      k:"きのみの数S",
+      b:"おてつだいボーナス",
+      ex:"睡眠EXPボーナス",
+      ge:"げんき回復ボーナス",
+      re:"リサーチEXPボーナス",
+      kake:"ゆめのかけらボーナス",
+      lvm:"スキルレベルアップM",
+      sm:"おてつだいスピードM",
+      fm:"食材確率アップM",
+      skm:"スキル確率アップM",
+      syl:"最大所持数アップL",
+      sym:"最大所持数アップM",
+      lvs:"スキルレベルアップS",
+      ss:"おてつだいスピードS",
+      fs:"食材確率アップS",
+      sks:"スキル確率アップS",
+      sys:"最大所持数アップS"
+    };
+    const c={
+      s:"おてつだいスピード",
+      f:"食材おてつだい確率",
+      sk:"メインスキル発生確率",
+      ge:"げんき回復量",
+      ex:"EXP獲得量"
+    };
+    const sub=Object.values(s);
+    const chara=Object.values(c);
+    const sub_gold=[s.k,s.b,s.ex,s.ge,s.re,s.kake,s.lvm];
+    const sub_blue=[s.sm,s.fm,s.skm,s.syl,s.sym,s.lvs];
+    const sub_white=[s.ss,s.fs,s.sks,s.sys];
+    const sub_preset={"kinomi":[s.k,s.b,s.sm,s.ss]};
+    const chara_preset={"kinomi":[c.s]};
+    
+    let sub_putting;
+    let chara_putting;
+    let wide;
+    
+    const fac=(n)=>{
+      let res=1;
+      for(let w=1;w<=n;w++){res*=w;}
+      return res;
+    };
+    
+    const bi=(n,k)=>{
+      return fac(n)/(fac(k)*fac(n-k));
+　　 }
+    
+    const perm=(n,k)=>{
+      return fac(n)/fac(n-k);
+　　 }
+    
+    const powerset = 
+     (arry)=>
+      arry.reduce(
+       (repeet,current)=>repeet.concat(
+         repeet.map(
+         (material)=>material.concat(current)
+         )
+       )
+      , [[]] );//配列の冪集合
+    
+    const charaset=arry=> arry.concat([""])
+          .flatMap(mat=>arry.concat([""]).map(mat2=>[mat,mat2]))
+           .filter(arr=>arr[0]!==arr[1])
+            .concat([["",""]])
+             .filter(arr =>arry.length !== 5 || arr[0] !== "" && arr[1] !== "");
+    //性格組み合わせ
+    
+    const kinominum=(arr)=>{
+    if(arr[0].includes(s.k)) return 3;
+    return 2;
+    };
+    
+    const speed=
+    (arr)=>{
+      let a=1;
+      if(arr[0].includes(s.b)) a-=0.25;
+      if(arr[0].includes(s.sm)) a-=0.14;
+      if(arr[0].includes(s.ss)) a-=0.07;
+      a=Math.max(a,0.65);
+      if(arr[1][0]==c.s) a*=0.9;
+      if(arr[1][1]==c.s) a*=1.075;
+      return a;
+    }
+    ;
+    
+    //*
+    const probability=
+    (arr)=>{
+     let subprob_putting_num=[0,0,0];
+     sub_putting.forEach((value)=>{
+       if(sub_gold.includes(value)) subprob_putting_num[0]++;
+       if(sub_blue.includes(value)) subprob_putting_num[1]++;
+       if(sub_white.includes(value)) subprob_putting_num[2]++;
+     }
+     );
+     const subprob_putting_total=subprob_putting_num[0]*0.02
+                                 +subprob_putting_num[1]*0.06
+                                 +subprob_putting_num[2]*0.125;
+     let subprob_num=[0,0,0];
+     arr[0].forEach((value)=>{
+       if(sub_gold.includes(value)) subprob_num[0]++;
+       if(sub_blue.includes(value)) subprob_num[1]++;
+       if(sub_white.includes(value)) subprob_num[2]++;
+     }
+     );
+     const subprob_total=
+            subprob_num[0]*0.02
+            +subprob_num[1]*0.06
+            +subprob_num[2]*0.125;
+     const subprob=fac(wide)
+                   *0.02**subprob_num[0]
+                   *0.06**subprob_num[1]
+                   *0.125**subprob_num[2]
+                   *(1-subprob_putting_total)**(wide-arr[0].length);
+     
+      const a=chara_putting.length;
+      let c=0;
+      if(arr[0]!=="") c++;
+      if(arr[1]!=="") c++;
+      const chara_prob=(()=>{
+        if(c==2) return 1/25;
+        if(c==1) return (5-a)/25;
+        if(c==0) return (a+(5-a)**2)/25;
+      })()
+      return subprob*chara_prob;
+    };
+    //*/
+    
+    const sort=(a,b)=>b[2]-a[2];
+
+    const normalize =
+    (arr,length)=>{
+      const newarr=arr.concat();
+      while(newarr.length<length){
+        newarr.push("-");
+      }
+      return newarr;
+    };
+    
+    
+    const maketable=(th,td,th_width)=>{
+      const table=document.createElement("table");
+      table.style.borderCollapse = "collapse";
+      table.border="3";
+      table.id="table";
+      
+      const tr1=document.createElement("tr");
+      table.appendChild(tr1);
+      th.forEach((value,index)=>{
+        const th1=document.createElement("th");
+        th1.colSpan=th_width[index];
+        th1.style.border = "3px solid black";
+        const txt1=document.createTextNode(value);
+        th1.appendChild(txt1);
+        tr1.appendChild(th1);
+      });
+      td.forEach(row=>{
+        const tr2=document.createElement("tr");
+        row.forEach(value=>{
+          const td1=document.createElement("td");
+          td1.style.border = "2px solid black";
+          const txt1=document.createTextNode(value);
+          td1.appendChild(txt1);
+          tr2.appendChild(td1);
+        });
+        table.appendChild(tr2);
+      });
+      
+      return table;
+    };
+    
+    const make=function(){
+      const checked=document.getElementById("preset").elements["preset"].value;
+      const level=document.getElementById("level").elements["level"].value;
+      wide=(()=>{
+        if(level=="lv25") return 2;
+        if(level=="lv50") return 3;
+        if(level=="lv75") return 4;
+        if(level=="lv100") return 5;
+      })();
+      sub_putting=sub_preset[checked];
+      chara_putting=chara_preset[checked];
+      const sublist=powerset(sub_putting).filter((array)=>array.length<=wide);
+      const charalist=charaset(chara_putting);
+      const statelist=sublist.flatMap(mat1=>charalist.map(mat2=>[mat1,mat2]));
+      const list=statelist.map(mat=>mat
+                          .concat([Math.round(500*kinominum(mat)/speed(mat))/1000])
+                          .concat(Math.round(probability(mat)*1000000)/10000));
+      const sorted=list.toSorted(sort);
+      const probs=sorted.reduce((repeet,current)=>{
+       return [repeet[0].concat(repeet[1]+current[3]),current[3]];
+      },[[],0])[0];
+      const list2=sorted.map(
+        ( (mat,index)=>mat.concat(Math.round(probs[index]*10000)/10000))
+      );
+      const latest=list2.map(mat=>[...normalize(mat[0],wide),...mat[1],mat[2],mat[3],mat[4]]);
+      const name=["サブスキル構成","せいかく↑","せいかく↓","おてつだい効率","出現率(%)","出現率計(%)"];
+      const namewidth=[wide,1,1,1,1,1];
+      document.getElementById("table").remove();
+      document.body.appendChild(maketable(name,latest,namewidth));
+    };
+    document.getElementById("button").addEventListener('click',make);
+  </script>
+</body>
+</html>

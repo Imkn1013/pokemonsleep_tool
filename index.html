@@ -1,10 +1,11 @@
 <html>
 <body>
   <h3>ポケモンスリープ厳選基準表メーカー</h3>
-  <p>ver-β</p>
+  <p>ver-β1.01</p>
   <p>made by せな</p>
   <p>評価基準と、育てる予定のレベルを入力してください。<br>
-  出現確率の計算が絶望的に間違っており、正しい計算方法も今ひとつわからないため参考にしないでください。<br>
+  <s>出現確率の計算が絶望的に間違っており、正しい計算方法も今ひとつわからないため参考にしないでください。</s><br>
+    かなり正確になったはずですが、正しいという保証は
   なお、現状利用できるのはきのみとくいいつの間に育成エナジーのみです。
   </p>
   <fieldset>
@@ -148,45 +149,111 @@
     }
     ;
     
+    /**
+ * 確率計算プログラム
+ * @param {number} n - 抽選回数
+ * @param {number[]} a - Aに含まれる [長さ2, 長さ6, 長さ12.5] の本数
+ * @param {number[]} b - Bに含まれる [長さ2, 長さ6, 長さ12.5] の本数
+ */
+function calculateProbability(n, a, b) {
+    const lengths = [2, 6, 12.5];
+    const totalCounts = [7, 6, 4]; // 全体の本数
+    
+    // グループごとの本数を整理
+    // items[長さのインデックス] = { len, countB, countForbidden, countOther }
+    const pool = lengths.map((len, i) => ({
+        len: len,
+        countB: b[i],                   // 必須 (A ∧ B)
+        countForbidden: a[i] - b[i],    // 禁止 (A ∧ ¬B)
+        countOther: totalCounts[i] - a[i] // 自由 (¬A)
+    }));
+
+    const totalBItems = b.reduce((sum, count) => sum + count, 0);
+
+    // 抽選回数nより必須アイテム数の方が多い場合は、絶対に確率は0
+    if (totalBItems > n) return 0;
+
+    /**
+     * 再帰的に確率を計算
+     * @param {number} drawsLeft - 残りの抽選回数
+     * @param {object[]} currentPool - 現在のくじの状態
+     * @param {number} bDrawn - これまでに引いた必須アイテムの数
+     */
+    function solve(drawsLeft, currentPool, bDrawn) {
+        // 全ての抽選が終わった時
+        if (drawsLeft === 0) {
+            // 全てのB（必須アイテム）を引けていれば成功(1)、そうでなければ失敗(0)
+            return bDrawn === totalBItems ? 1 : 0;
+        }
+
+        // 現在の全体の長さを計算
+        let currentTotalLength = 0;
+        for (const item of currentPool) {
+            currentTotalLength += item.len * (item.countB + item.countForbidden + item.countOther);
+        }
+
+        let probability = 0;
+
+        // 各長さのくじについて、「Bを引く場合」と「自由枠を引く場合」をシミュレート
+        for (let i = 0; i < currentPool.length; i++) {
+            const item = currentPool[i];
+
+            // 1. 必須アイテム(B)を引く
+            if (item.countB > 0) {
+                const prob = (item.len * item.countB) / currentTotalLength;
+                
+                // 状態を更新して次へ
+                const nextPool = JSON.parse(JSON.stringify(currentPool));
+                nextPool[i].countB--;
+                probability += prob * solve(drawsLeft - 1, nextPool, bDrawn + 1);
+            }
+
+            // 2. 自由枠(Other)を引く
+            if (item.countOther > 0) {
+                const prob = (item.len * item.countOther) / currentTotalLength;
+                
+                const nextPool = JSON.parse(JSON.stringify(currentPool));
+                nextPool[i].countOther--;
+                probability += prob * solve(drawsLeft - 1, nextPool, bDrawn);
+            }
+            
+            // 3. 禁止枠(Forbidden)を引く場合は、確率は加算されない（失敗ルートのため無視）
+        }
+
+        return probability;
+    }
+
+    return solve(n, pool, 0);
+}
+    
+    
+    const coloring=(arr)=>{
+      const color=[0,0,0];
+       arr.forEach(value=>{
+         if(sub_gold.includes(value)) color[0]++;
+         if(sub_blue.includes(value)) color[1]++;
+         if(sub_white.includes(value)) color[2]++;
+       });
+      return color;
+    };
+    
     //*
     const probability=
     (arr)=>{
-     let subprob_putting_num=[0,0,0];
-     sub_putting.forEach((value)=>{
-       if(sub_gold.includes(value)) subprob_putting_num[0]++;
-       if(sub_blue.includes(value)) subprob_putting_num[1]++;
-       if(sub_white.includes(value)) subprob_putting_num[2]++;
-     }
-     );
-     const subprob_putting_total=subprob_putting_num[0]*0.02
-                                 +subprob_putting_num[1]*0.06
-                                 +subprob_putting_num[2]*0.125;
-     let subprob_num=[0,0,0];
-     arr[0].forEach((value)=>{
-       if(sub_gold.includes(value)) subprob_num[0]++;
-       if(sub_blue.includes(value)) subprob_num[1]++;
-       if(sub_white.includes(value)) subprob_num[2]++;
-     }
-     );
-     const subprob_total=
-            subprob_num[0]*0.02
-            +subprob_num[1]*0.06
-            +subprob_num[2]*0.125;
-     const subprob=fac(wide)
-                   *0.02**subprob_num[0]
-                   *0.06**subprob_num[1]
-                   *0.125**subprob_num[2]
-                   *(1-subprob_putting_total)**(wide-arr[0].length);
+     const subprob_putting_num=coloring(sub_putting);
+     const subprob_num=coloring(arr[0]);
+      const subprob=calculateProbability(wide, subprob_putting_num, subprob_num);
      
       const a=chara_putting.length;
       let c=0;
-      if(arr[0]!=="") c++;
-      if(arr[1]!=="") c++;
+      if(arr[1][0]!=="") c++;
+      if(arr[1][1]!=="") c++;
       const chara_prob=(()=>{
         if(c==2) return 1/25;
         if(c==1) return (5-a)/25;
         if(c==0) return (a+(5-a)**2)/25;
-      })()
+      })();
+      
       return subprob*chara_prob;
     };
     //*/
@@ -252,11 +319,14 @@
                           .concat([Math.round(500*kinominum(mat)/speed(mat))/1000])
                           .concat(Math.round(probability(mat)*1000000)/10000));
       const sorted=list.toSorted(sort);
+      
       const probs=sorted.reduce((repeet,current)=>{
-       return [repeet[0].concat(repeet[1]+current[3]),current[3]];
-      },[[],0])[0];
+       return repeet.concat(repeet[repeet.length-1]+current[3]);
+      },[0]);
+      
+      console.log(probs);
       const list2=sorted.map(
-        ( (mat,index)=>mat.concat(Math.round(probs[index]*10000)/10000))
+        ( (mat,index)=>mat.concat(Math.round(probs[index+1]*10000)/10000))
       );
       const latest=list2.map(mat=>[...normalize(mat[0],wide),...mat[1],mat[2],mat[3],mat[4]]);
       const name=["サブスキル構成","せいかく↑","せいかく↓","おてつだい効率","出現率(%)","出現率計(%)"];

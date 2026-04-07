@@ -5,16 +5,17 @@
         width:100%;
       }
       td{
-        font-size:2vw;
+        font-size:1.8vw;
       }
       th{
-        font-size:2vw;
+        font-size:1vw;
+        white-space: pre-line;
       }
     </style>
   </head>
 <body>
   <h3>ポケモンスリープ厳選基準表メーカー</h3>
-  <p>ver-β1.1</p>
+  <p>ver-β1.2</p>
   <p>made by せな</p>
   <p>評価基準と、育てる予定のレベルを入力してください。<br>
   なお、現状利用できるのはきのみとくいいつの間に育成エナジーのみです。
@@ -96,7 +97,7 @@
       sks:"スキル確率S",
       sys:"最大所持数S"
     };
-    const c={
+    const ch={
       s:"おてスピ",
       f:"食材確率",
       sk:"スキル確率",
@@ -104,12 +105,12 @@
       ex:"EXP獲得量"
     };
     const sub=Object.values(s);
-    const chara=Object.values(c);
+    const chara=Object.values(ch);
     const sub_gold=[s.k,s.b,s.ex,s.ge,s.re,s.kake,s.lvm];
     const sub_blue=[s.sm,s.fm,s.skm,s.syl,s.sym,s.lvs];
     const sub_white=[s.ss,s.fs,s.sks,s.sys];
     const sub_preset={"kinomi":[s.k,s.b,s.sm,s.ss]};
-    const chara_preset={"kinomi":[c.s]};
+    const chara_preset={"kinomi":[ch.s]};
     
     let sub_putting;
     let chara_putting;
@@ -179,34 +180,45 @@
       if(arr[0].includes(s.sm)) a-=0.14;
       if(arr[0].includes(s.ss)) a-=0.07;
       a=Math.max(a,0.65);
-      if(arr[1][0]==c.s) a*=0.9;
-      if(arr[1][1]==c.s) a*=1.075;
+      if(arr[1][0]==ch.s) a*=0.9;
+      if(arr[1][1]==ch.s) a*=1.075;
       return a;
     };
     
     const full_pool=[7,6,4];
     const weight=[2,6,12.5];
-    const probability_calculate=(n,a,b)=>{
+    const probability_calculate=(n,a,b,c)=>{
       //禁止アイテムの確率は基本無視
-      const state_first=[n,full_pool,b,differ(full_pool,a),1];
-      //0:残り抽選数、1:箱の状態、2:必須アイテム、3:自由アイテム、4:確率
+      const state_first=[n,full_pool,b,differ(full_pool,a),1,c];
+      //0:残り抽選数、1:箱の状態、2:必須アイテム、3:自由アイテム、4:確率、5:確定枠数
       const update=(state)=>{
+        if(state[4]==0) return 0;
         if(total(state[2])>state[0]) return 0;//失敗
         if(state[0]==0&&total(state[2])==0)return state[4];//成功
         const key = `${state[0]}|${state[1].join(',')}|
-          ${state[2].join(',')}|${state[3].join(',')}`;
+          ${state[2].join(',')}|${state[3].join(',')}|${state[5]}`;
         if (cache.has(key)) return cache.get(key)*state[4];
         let branch_prob=0;
         for(let i=2;i<4;i++){// 必須/自由から選択
+        if(state[5]==0){
           state[i].forEach((value,index)=>{
             if(value==0) return 0;
-            const newstate=state.map((mat,id)=>id==0||id==4 ? mat : [...mat]);
+            const newstate=state.map((mat,id)=>id==0||id==4||id==5 ? mat : [...mat]);
             newstate[0]--;
             newstate[i][index]--;
             newstate[1][index]--;
             newstate[4]*=value*weight[index]/total(mult(state[1],weight));
             branch_prob+=update(newstate);
           });
+        }else{
+          const newstate=state.map((mat,id)=>id==0||id==4||id==5 ? mat : [...mat]);
+          newstate[0]--;
+          newstate[i][0]--;
+          newstate[1][0]--;
+          newstate[4]*=state[i][0]/(state[1][0]);
+          newstate[5]--;
+          branch_prob+=update(newstate);
+        }
         }
         cache.set(key,branch_prob/state[4]);
         return branch_prob;
@@ -216,11 +228,11 @@
     };
     
     const probability=
-    async(arr)=>{
+    async(arr,medal)=>{
       await sleep();
       const subprob_putting_num=coloring(sub_putting);
       const subprob_num=coloring(arr[0]);
-      const subprob=probability_calculate(wide, subprob_putting_num, subprob_num);
+      const subprob=probability_calculate(wide, subprob_putting_num, subprob_num,medal);
      
       const a=chara_putting.length;
       let c=0;
@@ -240,16 +252,20 @@
       table.style.borderCollapse = "collapse";
       table.border="3";
       table.id="table";
-      
       const tr1=document.createElement("tr");
+      //const cols=document.createElement("colgroup");
+      //table.appendChild(cols);
       table.appendChild(tr1);
       th.forEach((value,index)=>{
         const th1=document.createElement("th");
         th1.colSpan=th_width[index];
+        //const col=document.createElement("col");
+        //col.style.width="7vw";
         th1.style.border = "3px solid black";
         const txt1=document.createTextNode(value);
         th1.appendChild(txt1);
         tr1.appendChild(th1);
+        //cols.appendChild(col);
       });
       td.forEach((row,index)=>{
         const tr2=document.createElement("tr");
@@ -259,6 +275,10 @@
           if(color[index][idx]) td1.style.backgroundColor=color[index][idx];
           if(idx==wide) td1.style.color="red";
           if(idx==wide+1) td1.style.color="blue";
+          if(idx==wide+2) td1.style.backgroundColor="#D7FFD4";
+          if(idx==wide+5||idx==wide+6) td1.style.backgroundColor="#FDDAD4";
+          if(idx==wide+7||idx==wide+8) td1.style.backgroundColor="lightcyan";
+          if(idx==wide+9||idx==wide+10) td1.style.backgroundColor="#FDFAD4";
           const txt1=document.createTextNode(value);
           td1.appendChild(txt1);
           tr2.appendChild(td1);
@@ -285,24 +305,43 @@
       const statelist=sublist.flatMap(mat1=>charalist.map(mat2=>[mat1,mat2]));
       //組み合わせリスト作成
       const list=await Promise.all(statelist.map(async mat=>{
-        const prob=await probability(mat);
+        const prob0=await probability(mat,0);
+        const prob1=await probability(mat,1);
+        const prob2=await probability(mat,2);
+        const prob3=await probability(mat,3);
         return mat.concat([kinominum(mat)/speed(mat)/2])
-                  .concat(prob*100)}));
+                  .concat(prob0*100)
+                  .concat(prob1*100)
+                  .concat(prob2*100)
+                  .concat(prob3*100);
+      }));
       //確率、スコア追加
       const sorted=list.toSorted(sort);
       //ソート
       const probs=sorted.reduce((repeet,current)=>{
-       return repeet.concat(repeet[repeet.length-1]+current[3]);
-      },[0]);
-      const list2=sorted.map((mat,index)=>mat.concat(probs[index+1]));
+        return repeet.map((mat,index)=>
+                 mat.concat(mat[mat.length-1]+current[3+index]));
+      },[[0],[0],[0],[0]]);
+      const list2=sorted.map((mat,index)=>
+                mat.concat(probs.reduce((repeet,current)=>
+                            repeet.concat(current[index+1]),[])));
       //合計確率追加
-      
+      const di=5;
+      const form=(num, width)=>{
+        let str = num.toFixed(5); // 多めに桁確保
+        return str.slice(0, width);
+      }
       const latest=list2.map(mat=>
-                             [...normalize(mat[0],wide),...mat[1],mat[2].toFixed(5),
-                              mat[3].toFixed(5),mat[4].toFixed(5)]);
-      //0:サブスキル,1:せいかく,2:スコア,3:確率,4:確率計
-      const name=["サブスキル構成","せいかく↑","せいかく↓","おてつだい効率","出現率(%)","出現率計(%)"];
-      const namewidth=[wide,1,1,1,1,1];
+                             [...normalize(mat[0],wide),...mat[1],form(mat[2],di),
+                              form(mat[3],di),form(mat[7],di),
+                             form(mat[4],di),form(mat[8],di),
+                             form(mat[5],di),form(mat[9],di),
+                             form(mat[6],di),form(mat[10],di)]);
+      //0:サブスキル,1:せいかく,2:スコア,
+      //3:確率0,4:確率1,5:確率2,6:確率3,
+      //7:確率計0,8:確率計1,9:確率計2,10:確率計3
+      const name=["サブスキル構成","せいかく↑","せいかく↓","おてつだ\nい効率","出現率\n(なし)(%)","出現率計\n(なし)(%)","出現率\n(銅)(%)","出現率計\n(銅)(%)","出現率\n(銀)(%)","出現率計\n(銀)(%)","出現率\n(金)(%)","出現率計\n(金)(%)"];
+      const namewidth=[wide,1,1,1,1,1,1,1,1,1,1,1];
       const colorset=list2.map(mat=>coloring(normalize(mat[0],wide),"#FDF6D4","#C8FFFF","aliceblue","whitesmoke"));
       document.getElementById("table").remove();
       document.body.appendChild(maketable(name,latest,namewidth,colorset));

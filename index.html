@@ -2,20 +2,20 @@
   <head>
     <style>
       table{
-        width:100%;
+        width:clamp(100px,100%,1000px);
       }
       td{
-        font-size:1.8vw;
+        font-size: clamp(5px, 1.6vw, 15px);
       }
       th{
-        font-size:1vw;
+        font-size: clamp(5px, 1.5vw, 15px);
         white-space: pre-line;
       }
     </style>
   </head>
 <body>
   <h3>ポケモンスリープ厳選基準表メーカー</h3>
-  <p>ver-β1.2</p>
+  <p>ver-β1.1</p>
   <p>made by せな</p>
   <p>評価基準と、育てる予定のレベルを入力してください。<br>
   なお、現状利用できるのはきのみとくいいつの間に育成エナジーのみです。
@@ -79,7 +79,7 @@
   <script>
     
     const s={
-      k:"きのみの数S",
+      k:"きのみS",
       b:"おてボ",
       ex:"睡眠EXPボーナス",
       ge:"げんき回復ボーナス",

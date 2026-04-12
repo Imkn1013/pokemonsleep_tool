@@ -627,7 +627,8 @@
       "name": "egg",
       "c3": 3
     },
-    "form": "Holiday"
+    "form": "Holiday",
+    "japanese": "ピカチュウ(ホリデー)"
   },
   {
     "id": 25,
@@ -662,7 +663,8 @@
       "name": "egg",
       "c3": 3
     },
-    "form": "Halloween"
+    "form": "Halloween",
+    "japanese": "ピカチュウ(ハロウィン)"
   },
   {
     "id": 26,
@@ -837,7 +839,8 @@
       "name": "potato",
       "c3": 3
     },
-    "form": "Alola"
+    "form": "Alola",
+    "japanese": "ロコン(アローラ)"
   },
   {
     "id": 38,
@@ -871,7 +874,8 @@
     "ing3": {
       "name": "potato",
       "c3": 3
-    }
+    },
+    "japanese": "キュウコン"
   },
   {
     "id": 38,
@@ -906,7 +910,8 @@
       "name": "potato",
       "c3": 3
     },
-    "form": "Alola"
+    "form": "Alola",
+    "japanese": "キュウコン(アローラ)"
   },
   {
     "id": 39,
@@ -2212,7 +2217,8 @@
       "name": "milk",
       "c3": 9
     },
-    "form": "Halloween"
+    "form": "Halloween",
+    "japanese": "イーブイ(ハロウィン)"
   },
   {
     "id": 133,
@@ -2247,7 +2253,8 @@
       "name": "sausage",
       "c3": 3
     },
-    "form": "Holiday"
+    "form": "Holiday",
+    "japanese": "イーブイ(ホリデー)"
   },
   {
     "id": 134,
@@ -3289,7 +3296,8 @@
       "name": "potato",
       "c3": 9
     },
-    "form": "Paldea"
+    "form": "Paldea",
+    "japanese": "ウパー(パルデア)"
   },
   {
     "id": 195,
@@ -5214,7 +5222,8 @@
       "name": "ginger",
       "c3": 4
     },
-    "form": "Holiday"
+    "form": "Holiday",
+    "japanese": "タマザラシ(ホリデー)"
   },
   {
     "id": 364,
@@ -6617,7 +6626,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Small"
+    "form": "Small",
+    "japanese": "バケッチャ(こだましゅ)"
   },
   {
     "id": 710,
@@ -6652,7 +6662,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Medium"
+    "form": "Medium",
+    "japanese": "バケッチャ(ちゅうだましゅ)"
   },
   {
     "id": 710,
@@ -6687,7 +6698,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Large"
+    "form": "Large",
+    "japanese": "バケッチャ(おおだましゅ)"
   },
   {
     "id": 710,
@@ -6722,7 +6734,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Jumbo"
+    "form": "Jumbo",
+    "japanese": "バケッチャ(ギガだましゅ)"
   },
   {
     "id": 711,
@@ -6757,7 +6770,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Small"
+    "form": "Small",
+    "japanese": "パンプジン(こだましゅ)"
   },
   {
     "id": 711,
@@ -6792,7 +6806,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Medium"
+    "form": "Medium",
+    "japanese": "パンプジン(ちゅうだましゅ)"
   },
   {
     "id": 711,
@@ -6827,7 +6842,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Large"
+    "form": "Large",
+    "japanese": "パンプジン(おおだましゅ)"
   },
   {
     "id": 711,
@@ -6862,7 +6878,8 @@
       "name": "potato",
       "c3": 15
     },
-    "form": "Jumbo"
+    "form": "Jumbo",
+    "japanese": "パンプジン(ギガだましゅ)"
   },
   {
     "id": 714,
@@ -7387,7 +7404,8 @@
     "ing3": {
       "name": "leek",
       "c3": 2
-    }
+    },
+    "japanese": "ストリンダー(ハイなすがた)"
   },
   {
     "id": 849,
@@ -7422,7 +7440,8 @@
     "ing3": {
       "name": "leek",
       "c3": 2
-    }
+    },
+    "japanese": "ストリンダー(ローなすがた)"
   },
   {
     "id": 906,

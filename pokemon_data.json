@@ -671,7 +671,7 @@
     "name": "Raichu",
     "arrival": "2023-07-17",
     "sleepType": "snoozing",
-    "exp": 1080,
+    "exp": 600,
     "type": "electric",
     "specialty": "Berries",
     "skill": "Charge Strength S",
@@ -700,6 +700,76 @@
       "c3": 3
     },
     "japanese": "ライチュウ"
+  },
+  {
+    "id": 27,
+    "name": "Sandshrew",
+    "arrival": "2026-04-27",
+    "sleepType": "slumbering",
+    "exp": 600,
+    "type": "ground",
+    "specialty": "Skills",
+    "skill": "Ingredient Draw S",
+    "fp": 5,
+    "frequency": 5300,
+    "ingRate": 10.0,
+    "skillRate": 4.6,
+    "ancestor": 27,
+    "evolutionCount": 0,
+    "evolutionLeft": 1,
+    "isFullyEvolved": false,
+    "carryLimit": 11,
+    "ing1": {
+      "name": "pumpkin",
+      "c1": 1,
+      "c2": 2,
+      "c3": 4
+    },
+    "ing2": {
+      "name": "corn",
+      "c2": 4,
+      "c3": 6
+    },
+    "ing3": {
+      "name": "potato",
+      "c3": 7
+    },
+    "japanese": "サンド"
+  },
+  {
+    "id": 28,
+    "name": "Sandslash",
+    "arrival": "2026-04-27",
+    "sleepType": "slumbering",
+    "exp": 600,
+    "type": "ground",
+    "specialty": "Skills",
+    "skill": "Ingredient Draw S",
+    "fp": 12,
+    "frequency": 2800,
+    "ingRate": 10.8,
+    "skillRate": 4.3,
+    "ancestor": 27,
+    "evolutionCount": 1,
+    "evolutionLeft": 0,
+    "isFullyEvolved": true,
+    "carryLimit": 22,
+    "ing1": {
+      "name": "pumpkin",
+      "c1": 1,
+      "c2": 2,
+      "c3": 4
+    },
+    "ing2": {
+      "name": "corn",
+      "c2": 4,
+      "c3": 6
+    },
+    "ing3": {
+      "name": "potato",
+      "c3": 7
+    },
+    "japanese": "サンドパン"
   },
   {
     "id": 35,

@@ -27,12 +27,23 @@
   <p>ver-1.0</p>
   <p>made by せな</p>
   <p>評価基準と、育てる予定のレベルを入力してください。<br>
-  カスタム評価基準は準備中です。
-  </p>
+  カスタム評価基準は準備中です。</p>
+    <details>
+  <summary>【不具合】</summary>
+    　食材とくいA食材数について、食材構成の関係であえてレベルを下げたほうがA食材取得数が増える場合は,
+    lv29やlv59に落としているのですが、サブスキルが解放されたまま計算されています。<br>
+    食材構成と設定レベルにより、<br>
+    ABXならlv50~74→1枠分,lv75~99→2枠分,lv100~→3枠分,<br>
+    AAXならlv75~99→1枠分,lv100~→2枠分　だけ<br>サブスキルの枠が本来より余計に増えていることに注意してください。<br>改善するためにサブスキルの順序を区別すると表が煩雑になることを考え、ひとまず現状を維持する方針です。<br>　</details>
   <details>
   <summary>出現確率について</summary>
-  　サブスキルの抽選は、メダルによる金色確定枠を金色から等確率で抽選した後、未出現のものから1つあたり(白:12.5、青:6、金:2)の重みに基づいた確率で計算しています。実際の抽選方法と異なる可能性がありますので注意してください。
-</details><br>
+  　サブスキルの抽選は、メダルによる金色確定枠を金色から等確率で抽選した後、未出現のものから1つあたり(白:12.5、青:6、金:2)の重みに基づいた確率で計算しています。実際の抽選方法と異なる可能性がありますので注意してください。<br>　
+</details>
+  <details>
+  <summary>おてつだいボーナスの扱いについて</summary>
+    おてつだい時間のサブスキル補正は、<br>
+    　max( 0.65 , 1 - { (スピSの数)*0.07 + (スピMの数)*0.14 + (チーム全体のおてボの数)*0.05 } )<br>倍で、状況によって1倍から全員に1.076倍程度(実質1匹に約1.385倍)まで幅があり、他のポケモンが影響するため厳密な強さは計算できませんが、編成ポケモン全員が同様におてボを持っているとして計算(-0.25)しています。ただし、実際そのような状況は限定的で、多くの場合では他のポケモンへの効果量を擬似的に計算していると捉え、キャップは撤廃しました。本来キャップのかかるM+おてボ*5、S+M+おてボ*3以上という状況では過大評価になりますので注意してください。他の編成ポケモンが強ければ相対的におてボが強く、他の編成ポケモンが弱ければ相対的に弱くなることにも注意してください。<br>　
+  </details>
   <fieldset>
     <form id="preset">
    <legend>評価基準</legend>
@@ -61,13 +72,12 @@
   </fieldset>
   <fieldset>
     <form>
-      
+      <input list="pokemon_name_list" type="text" id="pokemon_name" placeholder="ポケモン名を入力…"/>
     </form>
   </fieldset>
+  <datalist id="pokemon_name_list"></datalist>
   <fieldset>
     <form id="level">
-      <input type="radio" name="level" id="lv25" value="lv25"/>
-      <label for="lv25">lv25</label>
       <input type="radio" name="level" id="lv30" value="lv30"/>
       <label for="lv30">lv30</label>
       <input type="radio" name="level" id="lv50" value="lv50" checked/>
@@ -87,23 +97,71 @@
   <table id="table" class="table"></table>
   
   <!--メモ：
-　　非食材型：25,50,75,100
-　　　食材型：30,50,60,75,100
 　　　オプション：
 　　　銀種、ミント、スキル天井
+
+     おてボは強さは(-5%)*5=-25%換算だが、5匹おてボが揃うのはあまり現実的でない
+     →おてボ1で単体の短縮上限-35%の-25%を占めるのは違和感がある
+     →上限撤廃,カスタムで設定
+
+     天井考慮スキル回数
+     B,C食材
+
+     注目性格、サブスキル
+
 　　　食材→ABCの比重を入力
-　　　A食材の数
-　　　AAA→そのまま
-　　　ABA→60前提ならそのまま、50以下は25止め
-　　　　　　　　(25と50で多い方がよいが、一枠で2倍を補うサブスキルがないため)
-　　　AAX→50止め、lv100前提なら多い方　7/2→7/3(2/3倍)
-　　　ABX→
 　　　ABC、きのみに重み付け(基本は追加食材扱い？)
-　　　lv29,lv59,最大lvで計算→スコア最大を採用(お手スピ補正を考える)
+
+     ※ingmax_Aについてレベルによるサブスキルの変化は考慮していないため、
+     　(10,25,50,75,100)レベルを跨いだ変化は実際の評価と違う可能性が
+     　(29,59,n)のうちn以下のレベルでA食材量を計算し最大値を算出(nは指定レベル)
+       29,59に下げたことで本来減少するサブスキル効果量をp(29),p(59)とする
+     　f(x):=lvx時点での本来のA食材量(n<xの場合は0) , g(x):=f(x)*p(x)
+     　以下はAAAのみの暫定的な対策であることに注意
+     　f(n) < max(g(29),g(59),f(n)) ⇒ max(g(29),g(59))が表示
+     　p(29) : wide-2個分 ex)50→1個分
+     　p(59) : wide-1個分 ex)50→0個分
+     　f(n)<f(59)である場合は{AAX→AA,ABX→AB}
+     　(59<n,n<75→0個,74<n<100→1個,99<n→2個)
+     　AAX→AA:3/2倍 , ABX→AB:3/2倍
+     　f(n)<f(29)∧f(59)<f(29)である場合は{AB→A,ABX→A}
+     　(29<n,n<50→0個,49<n<75→1個,74<n<100→2個,99<n→3個)
+     　AB→A:2倍 , ABX→A:3倍
+     　AAA,AAB,AAC,ABA,ABB,ABC
+     　サブスキルの強さ
+     　おてボ:上限付近で1.385倍未満
+     　食M:最大1.36倍
+     　スピM:上限付近で1.216倍未満
+     　スピS:上限付近で1.108倍未満
+
+     サブスキル枠をレベルで区別し、100まで出してミントを確認
+     基本的に全開放前提でいいが、きのみとくい食材確率などは注意
+     レベルによるサブスキル減少を考慮しつつlv29,lv59を計算
+     →解放サブスキル(と性格、食材構成)からスコアを計算
+     解放サブスキル組み合わせが一致なら統合したいが、以下のような例がある
+     lv100,AAB,-,-,-,おてボ,食M
+     
+     10,25/50/75,100
+     なんなら所持数の関係で食材無視のスキルとくいでもlv29やlv59のほうが高スコアになる可能性すらある
+     もっというときのみとくいで食材確率解放でスコア下がるかも
 　　!-->
   
   <button id=button>生成</button>
-  <script>
+  <script type="module">
+    
+    import data from "https://imkn1013.github.io/pokemonsleep_tool/pokemon_data.json" with {type:"json"};
+    
+    document.getElementById("pokemon_name_list").innerHTML
+      =data.map(mat=>`<option value="${mat.japanese}">`).join('');
+    
+    const toKatakana=str=>{//3041(ぁ)から3096(ゖ)の範囲
+      return str.replace(/[\u3041-\u3096]/g,match=>{
+        return String.fromCharCode(match.charCodeAt(0)+0x60);
+    });};
+    
+    document.getElementById("pokemon_name").addEventListener('input',e=>{
+      e.target.value =toKatakana(e.target.value);
+    });
     
     const s={k:"きのみS",b:"おてボ",ex:"睡眠EXPボーナス",ge:"げんき回復ボーナス",
       re:"リサーチEXPボーナス",kake:"ゆめのかけらボーナス",lvm:"スキルレベルM",
@@ -139,6 +197,7 @@
     let func;
     let wide;
     let level;
+    let special;
     const di=5;//表示桁数
     
     //計算セット
@@ -202,7 +261,7 @@
       if(arr[0].includes(s.b)) a-=0.25;
       if(arr[0].includes(s.sm)) a-=0.14;
       if(arr[0].includes(s.ss)) a-=0.07;
-      a=Math.max(a,0.65);
+      //a=Math.max(a,0.65);
       if(arr[1][0]==ch.s) a*=0.9;
       if(arr[1][1]==ch.s) a*=1.075;
       return a;};

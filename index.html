@@ -1,5 +1,6 @@
 <html>
   <head>
+    <meta charset="UTF-8">
     <style>
       table{
         width:clamp(100px,100%,1000px);
@@ -24,8 +25,9 @@
   </head>
 <body>
   <h3>ポケモンスリープ厳選基準表メーカー</h3>
-  <p>ver-1.0</p>
+  <p>ver-1.01</p>
   <p>made by せな</p>
+  <p>更新:2026-5-3</p>
   <p>評価基準と、育てる予定のレベルを入力してください。<br>
   カスタム評価基準は準備中です。</p>
     <details>
@@ -70,7 +72,7 @@
    </div>
       </form>
   </fieldset>
-  <fieldset>
+  <fieldset style="display:none;">
     <form>
       <input list="pokemon_name_list" type="text" id="pokemon_name" placeholder="ポケモン名を入力…"/>
     </form>
@@ -89,7 +91,7 @@
       <input type="radio" name="level" id="lv100" value="lv100"/>
       <label for="lv100">lv100</label>
       <br>
-      <input type="radio" name="level" id="lvcustom" value="lvcustom"/>
+      <input type="radio" name="level" id="lvcustom"/>
       <label for="lvcustom">カスタム</label>
       <input id="lvinput" class="lvinput" type="number" placeholder="数値を入力...">
     </form>
@@ -161,6 +163,11 @@
     
     document.getElementById("pokemon_name").addEventListener('input',e=>{
       e.target.value =toKatakana(e.target.value);
+    });
+    
+    document.getElementById("lvinput").addEventListener('input',e=>{
+      document.getElementById("lvcustom").value="lv"+e.target.value;
+      console.log("lv"+e.target.value);
     });
     
     const s={k:"きのみS",b:"おてボ",ex:"睡眠EXPボーナス",ge:"げんき回復ボーナス",

@@ -190,13 +190,13 @@
     //とくい:[0:きのみ,1:食材,2:スキル,3:オール]
     //食材注目は出現率にのみ使用(スコアは別途計算)
     const preset={"kinomi":[[s.k,s.b,s.sm,s.ss],[ch.s],0,0,
-                            mat=>kinominum(mat)/speed(mat)/2],
+                            arg=>kinominum(arg)/speed(arg)/2],
                   "ingredients":[[s.b,s.fm,s.fs,s.sm,s.ss],[ch.f,ch.s],1,1,
-                                mat=>ingprob(mat)*ingmax_A(mat)/speed(mat)],
+                                arg=>ingprob(arg)*ingmax_A(arg)/speed(arg)],
                   "ingredients_AAA":[[s.b,s.fm,s.fs,s.sm,s.ss],[ch.f,ch.s],0,1,
-                                mat=>ingprob(mat)/speed(mat)],
+                                arg=>ingprob(arg)/speed(arg)],
                   "skilltimes":[[s.b,s.skm,s.sks,s.sm,s.ss],[ch.sk,ch.s],0,2,
-                                mat=>skillprob(mat)/speed(mat)]
+                                arg=>skillprob(arg)/speed(arg)]
                  };
     let sub_putting;
     let chara_putting;
@@ -373,6 +373,32 @@
       return subprob*chara_prob*ing_prob;
     };
     
+    const medalline={ 5:[9,39,99],7:[9,39,99],
+      10:[9,29,59],12:[9,29,59], 15:[9,24,49],16:[9,24,49],
+      18:[9,19,39],20:[9,19,39],22:[9,19,39],25:[9,19,39],30:[9,19,39]};
+    const appearline=(white_prob,bronze_prob,silver_prob,gold_prob,appear_line,priority,friendpoint)=>{
+      //_prob:合計出現率(number),appear_line:x%出現(number),priority:メダル優先度(array[number*4])
+      //ex) (0.1,0.2,0.3,0.4,80,[2,1,0,3])
+      //priorityは最高個体値の出現確率に基づいて決めるとよい？
+      let _prob=1;
+      let _level=1;
+      let _take=0;
+      const _medal=medalline[friendpoint];
+      while(_prob>1-appear_line/100){
+        _take=priority.indexOf( Math.min(...priority) );
+        if(_level<_medal[2]) _take=priority.indexOf( Math.min(...priority.slice(0,3)) );
+        if(_level<_medal[1]) _take=1;
+        if(_level<_medal[0]) _take=0;
+        if(_take==0) _prob*=1-white_prob/100;
+        if(_take==1) _prob*=1-bronze_prob/100;
+        if(_take==2) _prob*=1-silver_prob/100;
+        if(_take==3) _prob*=1-gold_prob/100;
+        _level++;
+      }
+      _level--;
+      return _level.toString();
+    };
+    
     const maketable=(top,main,th_width,color)=>{
       const newtable=document.createElement("table");
       newtable.style.borderCollapse = "collapse";
@@ -430,10 +456,11 @@
       special=preset[checked][3];
       func=preset[checked][4];
       //組み合わせリスト作成
-      const sublist=powerset(sub_putting).filter((array)=>array.length<=wide);
+      const sublist=powerset(sub_putting).filter((arr)=>arr.length<=wide);
       const charalist=charaset(chara_putting);
-      const statelist=sublist.flatMap(mat1=>charalist.map(mat2=>[mat1,mat2]))
-            .flatMap(mat3=>Object.keys(ingpattern[ing]).map(mat4=>mat3.concat(mat4)));
+      const statelist=sublist.flatMap(_sub=>charalist.map(_chara=>[_sub,_chara]))
+            .flatMap(_sub_chara=>Object.keys(ingpattern[ing]).map(_ing=>_sub_chara.concat(_ing)));
+      //sub,chara,ingの直積[[[sub1-1,sub1-2],[up1,down1],"AAA"],,,]
       
       //確率、スコア追加
       const list=await Promise.all(statelist.map(async mat=>{
@@ -461,23 +488,23 @@
       const latest=ing==0 ?
         list2.map(mat=>
         [...normalize(mat[0],wide),...mat[1],mat[3],mat[4],mat[8],
-         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11]]
+         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline(mat[8],mat[9],mat[10],mat[11],80,[3,1,0,2],5)]
          .map(mat2=>{if(typeof mat2=="number") return form(mat2,di);return mat2;}))
        :
         list2.map(mat=>
         [...normalize(mat[0],wide),...mat[1],mat[2],mat[3],mat[4],mat[8],
-         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11]]
+         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline(mat[8],mat[9],mat[10],mat[11],80,[3,1,0,2],5)]
          .map(mat2=>{if(typeof mat2=="number") return form(mat2,di);return mat2;}));
       
-      //0:サブスキル,1:せいかく,2:スコア,
-      //3:確率0,4:確率1,5:確率2,6:確率3,
-      //7:確率計0,8:確率計1,9:確率計2,10:確率計3
-      const thname1=ing==0 ? ["サブスキル構成","せいかく","つよさ\n倍率","メダル別出現率/出現率計(%)"]
-                    : ["サブスキル構成","せいかく","食材構成","つよさ\n倍率","メダル別出現率/出現率計(%)"];
+      //0:サブスキル,1:せいかく,2:食材構成,3:スコア,
+      //4:確率0,5:確率1,6:確率2,7:確率3,
+      //8:確率計0,9:確率計1,10:確率計2,11:確率計3
+      const thname1=ing==0 ? ["サブスキル構成","せいかく","つよさ\n倍率","メダル別出現率/出現率計(%)","80%出現\nライン"]
+                    : ["サブスキル構成","せいかく","食材構成","つよさ\n倍率","メダル別出現率/出現率計(%)","80%出現\nライン"];
       const thname2=["↑","↓","なし","合計","銅","合計","銀","合計","金","合計"];
-      const thwidth1=ing==0 ? [wide,2,1,8] : [wide,2,1,1,8];
+      const thwidth1=ing==0 ? [wide,2,1,8,1] : [wide,2,1,1,8,1];
       const thwidth2=[1,1,1,1,1,1,1,1,1,1];
-      const thheight=ing==0 ? [2,1,2,1] :[2,1,2,2,1];
+      const thheight=ing==0 ? [2,1,2,1,2] :[2,1,2,2,1,2];
       const colorset=list2.map(mat=>coloring(
         normalize(mat[0],wide),"#FDF6D4","#C8FFFF","aliceblue","whitesmoke"));
       

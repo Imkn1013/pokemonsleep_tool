@@ -373,30 +373,35 @@
       return subprob*chara_prob*ing_prob;
     };
     
-    const medalline={ 5:[9,39,99],7:[9,39,99],
-      10:[9,29,59],12:[9,29,59], 15:[9,24,49],16:[9,24,49],
-      18:[9,19,39],20:[9,19,39],22:[9,19,39],25:[9,19,39],30:[9,19,39]};
-    const appearline=(white_prob,bronze_prob,silver_prob,gold_prob,appear_line,priority,friendpoint)=>{
-      //_prob:合計出現率(number),appear_line:x%出現(number),priority:メダル優先度(array[number*4])
+    
+    const getlogceil=(a,b)=>{
+      if(a>=1) return Infinity;
+      if(a<b) return 1;
+      return Math.ceil(Math.log(b)/Math.log(a)-1e-12);}
+    const appearline=(appear_probs,appear_line,priority,friendpoint)=>{
+      //_probs:メダル別合計出現率(array[number*4]),appear_line:x%出現(number),priority:メダル優先度(array[number*4])
       //ex) (0.1,0.2,0.3,0.4,80,[2,1,0,3])
       //priorityは最高個体値の出現確率に基づいて決めるとよい？
-      let _prob=1;
-      let _level=1;
-      let _take=0;
-      const _medal=medalline[friendpoint];
-      while(_prob>1-appear_line/100){
-        _take=priority.indexOf( Math.min(...priority) );
-        if(_level<_medal[2]) _take=priority.indexOf( Math.min(...priority.slice(0,3)) );
-        if(_level<_medal[1]) _take=1;
-        if(_level<_medal[0]) _take=0;
-        if(_take==0) _prob*=1-white_prob/100;
-        if(_take==1) _prob*=1-bronze_prob/100;
-        if(_take==2) _prob*=1-silver_prob/100;
-        if(_take==3) _prob*=1-gold_prob/100;
-        _level++;
-      }
-      _level--;
-      return _level.toString();
+      const _probs=appear_probs.map(_=>_/100);
+      const [_white,_bronze,_silver,_gold]=_probs;
+      let _medal=[8,30,60];
+      if(friendpoint>7) _medal=[8,20,30];
+      if(friendpoint>12) _medal=[8,15,25];
+      if(friendpoint>16) _medal=[8,10,20];
+      let _line=1-appear_line/100;
+      let times=0;
+      if((1-_white)**_medal[0]<_line) return getlogceil(1-_white,_line);
+      _line/=(1-_white)**_medal[0];
+      times+=_medal[0];
+      if((1-_bronze)**_medal[1]<_line) return getlogceil(1-_bronze,_line)+times;
+      _line/=(1-_bronze)**_medal[1];
+      times+=_medal[1];
+      const _firstof3=priority.indexOf(Math.min(...priority.slice(0,3)));
+      if((1-_probs[_firstof3])**_medal[2]<_line) return getlogceil(1-_probs[_firstof3],_line)+times;
+      _line/=(1-_probs[_firstof3])**_medal[2];
+      times+=_medal[2];
+      const _first=priority.indexOf(Math.min(...priority));
+      return getlogceil(1-_probs[_first],_line)+times;
     };
     
     const maketable=(top,main,th_width,color)=>{
@@ -472,6 +477,17 @@
          .concat(prob0*100).concat(prob1*100)
          .concat(prob2*100).concat(prob3*100);
       }));
+      /*
+      const list=[];
+      for(const mat of statelist){
+        const _prob0=await probability(mat,0);
+        const _prob1=await probability(mat,1);
+        const _prob2=await probability(mat,2);
+        const _prob3=await probability(mat,3);
+        const _functioned=await func(mat);
+        list.push(mat.concat([_functioned,_prob0*100,_prob1*100,_prob2*100,_prob3*100]));
+      }//*/
+      
       
       const sorted=list.toSorted(sort);
       
@@ -485,15 +501,22 @@
                 mat.concat(probs.reduce((repeet,current)=>
                             repeet.concat(current[index+1]),[])));
       
+      const medal_priority=ing==0 ? [3,1,0,2] : [1,0,2,3];
+      const appearline_list = [];
+      for (const mat of list2){
+        const _res =await appearline([mat[8],mat[9],mat[10],mat[11]],80,medal_priority,5);
+        appearline_list.push(_res.toString());
+      }
+      
       const latest=ing==0 ?
-        list2.map(mat=>
+        list2.map((mat,index)=>
         [...normalize(mat[0],wide),...mat[1],mat[3],mat[4],mat[8],
-         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline(mat[8],mat[9],mat[10],mat[11],80,[3,1,0,2],5)]
+         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline_list[index]]
          .map(mat2=>{if(typeof mat2=="number") return form(mat2,di);return mat2;}))
        :
-        list2.map(mat=>
+        list2.map((mat,index)=>
         [...normalize(mat[0],wide),...mat[1],mat[2],mat[3],mat[4],mat[8],
-         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline(mat[8],mat[9],mat[10],mat[11],80,[3,1,0,2],5)]
+         mat[5],mat[9],mat[6],mat[10],mat[7],mat[11],appearline_list[index]]
          .map(mat2=>{if(typeof mat2=="number") return form(mat2,di);return mat2;}));
       
       //0:サブスキル,1:せいかく,2:食材構成,3:スコア,
